@@ -47,9 +47,9 @@ vault kv put database/config/my-postgresql \
 TTL_SECONDS=5
 vault kv put database/roles/db-dba \
     db_name="my-postgresql" \
-    creation_statements="CREATE ROLE \"{{name}}\" WITH SUPERUSER LOGIN PASSWORD '{{password}}' VALID UNTIL '{{expiration}}';"
-    revocation_statements="ALTER ROLE \"{{name}}\" NOLOGIN;"\
-    renew_statements="ALTER ROLE \"{{name}}\" PASSWORD '{{password}}' VALID UNTIL '{{expiration}}';"
+    creation_statements="CREATE ROLE \"{{name}}\" WITH SUPERUSER LOGIN PASSWORD '{{password}}' VALID UNTIL '{{expiration}}';" \
+    revocation_statements="ALTER ROLE \"{{name}}\" NOLOGIN;" \
+    renew_statements="ALTER ROLE \"{{name}}\" PASSWORD '{{password}}' VALID UNTIL '{{expiration}}';" \
     default_ttl="$TTL_SECONDS" \
     max_ttl="24h"
 
