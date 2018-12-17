@@ -1,0 +1,45 @@
+#!/bin/bash
+
+set -e
+
+# Clean up in case we're re-run, start fresh.
+systemctl stop consul 2>/dev/null || true
+rm -rf /etc/consul /var/consul 2>/dev/null || true
+mkdir /etc/consul
+
+# Setup vault user and data dir
+id -u consul &>/dev/null || sudo useradd -r -d /var/lib/consul -s /bin/nologin consul
+install -o consul -g consul -m 750 -d /var/consul
+
+if [ -x /vagrant/consul/consul ]; then
+  cp /vagrant/consul/consul /usr/local/bin/
+else
+  echo "Fetching consul"
+
+  CONSUL_VERSION=1.2.0
+  CONSUL_ARCH=linux_amd64
+  CONSUL_ZIP=consul_${CONSUL_VERSION}_${CONSUL_ARCH}.zip
+  cd /tmp
+  wget -q https://releases.hashicorp.com/consul/${CONSUL_VERSION}/$CONSUL_ZIP
+  unzip -o /tmp/$CONSUL_ZIP
+  cp consul /usr/local/bin/consul
+fi
+
+ENCRYPT=$(consul keygen)
+cat - > /etc/consul/consul.hcl <<EOF
+datacenter = "dc1"
+data_dir = "/var/consul"
+encrypt = "$ENCRYPT"
+server = true
+bootstrap_expect = 1
+EOF
+
+cp /vagrant/consul/consul.service /etc/systemd/system/
+systemctl daemon-reload
+systemctl start consul
+
+while ! nc -z localhost 8500; do
+  sleep 1
+  echo -n '.'
+done
+echo

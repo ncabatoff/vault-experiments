@@ -1,0 +1,22 @@
+#!/bin/bash
+
+set -e
+
+INSTANCE=${1-1}
+PORT=$((8200+2*$INSTANCE))
+
+sed -e s/:8200/:$PORT/ /etc/vault.hcl > /etc/vault$INSTANCE.hcl
+sed s/vault.hcl/vault$INSTANCE.hcl/ /etc/systemd/system/vault.service > /etc/systemd/system/vault$INSTANCE.service 
+systemctl daemon-reload
+systemctl restart vault$INSTANCE
+
+while ! nc -z localhost $PORT; do
+  sleep 1
+  echo -n '.'
+done
+echo
+
+# TODO revisit, right now we assume that all standbys are for the primary cluster.
+. /etc/environment
+export VAULT_ADDR=http://localhost:$PORT
+vault operator unseal $VAULT_UNSEAL_KEY_0

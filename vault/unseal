@@ -1,0 +1,10 @@
+#!/bin/bash
+
+set -e
+
+INSTANCE=${1-0}
+PORT=$((8200+2*$INSTANCE))
+export VAULT_ADDR=http://localhost:$PORT
+
+eval vault operator unseal \$VAULT_UNSEAL_KEY_$INSTANCE
+

@@ -1,0 +1,47 @@
+#!/bin/bash
+
+set -e
+
+# Clean up in case we're re-run, start fresh.
+systemctl stop vault 2>/dev/null || true
+systemctl stop vault2 2>/dev/null || true
+rm -rf /var/vault 2>/dev/null || true
+
+# Setup vault user and data dir
+id -u vault &>/dev/null || sudo useradd -r -d /var/lib/vault -s /bin/nologin vault
+install -o vault -g vault -m 750 -d /var/vault
+
+# Install vault
+if [ -x /vagrant/vault/vault ]; then
+  cp /vagrant/vault/vault /usr/local/bin/
+else
+  echo "Fetching vault"
+
+  VAULT_VERSION=1.0.0
+  VAULT_ARCH=linux_amd64
+  VAULT_ZIP=vault_${VAULT_VERSION}_${VAULT_ARCH}.zip
+  cd /tmp
+  wget -q https://releases.hashicorp.com/vault/${VAULT_VERSION}/${VAULT_ZIP}
+  unzip -o /tmp/$VAULT_ZIP
+  cp vault /usr/local/bin/vault
+fi
+setcap cap_ipc_lock+ep /usr/local/bin/vault
+
+echo "Starting vault"
+cp /vagrant/vault/vault.hcl /etc/
+cp /vagrant/vault/vault.service /etc/systemd/system/
+systemctl daemon-reload
+systemctl start vault
+
+VAULT_PORT=8200
+export VAULT_ADDR=http://localhost:$VAULT_PORT
+sed -i /^VAULT_ADDR=/d /etc/environment
+echo "VAULT_ADDR=$VAULT_ADDR" >> /etc/environment
+
+while ! nc -z localhost $VAULT_PORT; do
+  sleep 1
+  echo -n '.'
+done
+echo
+
+echo "Run /vagrant/vault/initunseal to get a useable vault."

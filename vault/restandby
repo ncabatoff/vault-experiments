@@ -1,0 +1,10 @@
+#!/bin/bash
+
+set -e
+
+/vagrant/reprovision
+/vagrant/vault/init
+ . /etc/environment
+export VAULT_UNSEAL_KEY_0
+/vagrant/vault/unseal
+/vagrant/vault/standby

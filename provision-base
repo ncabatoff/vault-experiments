@@ -1,0 +1,10 @@
+#!/bin/bash
+
+set -e
+
+#Set DEBIAN_FRONTEND as noninteractive. This is required to avoid the error
+# dpkg-preconfigure: unable to re-open stdin: No such file or directory
+export DEBIAN_FRONTEND=noninteractive
+
+apt-get update
+apt-get install -y -q unzip jq curl

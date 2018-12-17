@@ -1,0 +1,12 @@
+#!/bin/bash
+
+cd /etc/systemd/system
+for i in $(echo vault*.service | sed s/.service//g); do
+    systemctl stop $i
+done
+/vagrant/provision-consul
+while ! consul kv export 2>/dev/null; do
+  echo -n '.'
+  sleep 1
+done
+/vagrant/provision-vault

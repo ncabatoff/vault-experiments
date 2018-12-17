@@ -1,0 +1,17 @@
+#!/bin/bash
+
+set -e
+
+INSTANCE=${1-0}
+PORT=$((8200+2*$INSTANCE))
+export VAULT_ADDR=http://localhost:$PORT
+
+# WARNING: This is not a secure way to initialize vault.  This is for a demo/toy.
+initoutput=$(vault operator init -key-shares=1 -key-threshold=1 -format=json)
+unsealkey=$(echo "$initoutput" | jq -r .unseal_keys_hex[0])
+roottoken=$(echo "$initoutput" | jq -r .root_token)
+
+sed -i /^VAULT_ROOT_TOKEN_$INSTANCE/d /etc/environment
+echo "VAULT_ROOT_TOKEN_$INSTANCE=$roottoken" | tee -a /etc/environment
+sed -i /^VAULT_UNSEAL_KEY_$INSTANCE/d /etc/environment
+echo "VAULT_UNSEAL_KEY_$INSTANCE=$unsealkey" | tee -a /etc/environment
