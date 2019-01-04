@@ -21,3 +21,7 @@ Creates a standby instance and unseals it using keys from /etc/environment.
 ## restandby
 
 Wipes everything, then starts/inits/unseals a primary and a standby node.
+
+## secondary
+
+Creates a secondary cluster using performance replication.

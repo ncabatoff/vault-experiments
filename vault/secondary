@@ -1,0 +1,45 @@
+#!/bin/bash
+
+set -e
+
+# Setup config/systemd for second Vault instance.
+VAULT2_PORT=8202
+rm -rf /var/vault/data2
+sed -e s/:8200/:$VAULT2_PORT/ -e s,vault/,vault2/, /etc/vault.hcl > /etc/vault2.hcl
+sed s/vault.hcl/vault2.hcl/ /etc/systemd/system/vault.service > /etc/systemd/system/vault2.service 
+systemctl daemon-reload
+systemctl restart vault2
+
+while ! nc -z localhost $VAULT2_PORT; do
+  sleep 1
+  echo -n '.'
+done
+echo
+
+# Init and unseal both instances
+for i in 0 1; do
+  /vagrant/vault/init $i
+  . /etc/environment
+  eval export VAULT_UNSEAL_KEY_$i
+  /vagrant/vault/unseal $i
+done
+
+# Enable replication
+export VAULT_ADDR=http://localhost:8200 
+PATHPFX=sys/replication/performance
+VAULT_TOKEN=$VAULT_ROOT_TOKEN_0 vault write -f $PATHPFX/primary/enable
+VAULT_TOKEN=$VAULT_ROOT_TOKEN_0 vault write -field=wrapping_token $PATHPFX/primary/secondary-token id=meh |
+  VAULT_ADDR=http://127.0.0.1:8202 VAULT_TOKEN=$VAULT_ROOT_TOKEN_1 vault write $PATHPFX/secondary/enable token=- primary_api_addr=$VAULT_ADDR
+
+# Give the secondary some time to settle
+sleep 5
+
+# Generate a new root token on the secondary cluster
+export VAULT_ADDR=http://localhost:8202
+otp=$(vault operator generate-root -generate-otp)
+nonce=$(vault operator generate-root -init -otp="$otp" -format=json |jq -r .nonce)
+encoded=$(echo "$VAULT_UNSEAL_KEY_0" | vault operator generate-root -nonce="$nonce" -format=json - |jq -r .encoded_root_token)
+newroot=$(vault operator generate-root -otp="$otp" -decode="$encoded")
+sed -i /^VAULT_ROOT_TOKEN_1/d /etc/environment
+echo "VAULT_ROOT_TOKEN_1=$newroot" >> /etc/environment
+
