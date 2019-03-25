@@ -17,7 +17,7 @@ if [ -x /vagrant/vault/vault ]; then
 else
   echo "Fetching vault"
 
-  VAULT_VERSION=1.0.0
+  VAULT_VERSION=1.1.0
   VAULT_ARCH=linux_amd64
   VAULT_ZIP=vault_${VAULT_VERSION}_${VAULT_ARCH}.zip
   cd /tmp
