@@ -39,7 +39,6 @@ function setup_agent {
     auto_auth {
         method {
             type = "approle"
-            wrap_ttl = 300
             config = {
                 role_id_file_path = "/tmp/agent/role_id"
                 secret_id_file_path = "/tmp/agent/secret_id"
@@ -71,7 +70,7 @@ vault secrets enable kv
 vault kv put kv/foo val=bar
 
 unset VAULT_TOKEN
-/vagrant/vault/vault agent -config /tmp/agent/vault-agent.hcl &
+vault agent -config /tmp/agent/vault-agent.hcl &
 function killagent {
   kill %1
 }
