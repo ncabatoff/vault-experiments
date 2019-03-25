@@ -1,14 +1,29 @@
 #!/bin/bash
 
+rootstdout=
+if [ $# = 1 ]; then
+    if [ "$1" = "rootstdout" ]; then
+        rootstdout=1
+    else
+        echo "invalid argument '$1'" 1>&2
+        exit 1
+    fi
+fi
+
 # WARNING: This is not a secure way to initialize vault.  This is for a demo/toy.
 initoutput=$(vault operator init -key-shares=1 -key-threshold=1 -format=json)
 unsealkey=$(echo "$initoutput" | jq -r .unseal_keys_hex[0])
 roottoken=$(echo "$initoutput" | jq -r .root_token)
-vault operator unseal "$unsealkey"
 
-echo
-echo "Unseal key is '$unsealkey', you will need it to unseal vault if you restart it."
-echo "Alternatively, you can run 'vagrant provision' from the host machine but you will lose all vault data."
-echo
-echo "Root token is '$roottoken'."
-echo "Run /vagrant/reprovision to wipe Vault and start fresh."
+if [ "$rootstdout" = "" ]; then
+    vault operator unseal "$unsealkey"
+    echo
+    echo "Unseal key is '$unsealkey', you will need it to unseal vault if you restart it."
+    echo "Alternatively, you can run 'vagrant provision' from the host machine but you will lose all vault data."
+    echo
+    echo "Root token is '$roottoken'."
+    echo "Run /vagrant/reprovision to wipe Vault and start fresh."
+else
+    vault operator unseal "$unsealkey" 1>&2
+    echo $roottoken
+fi
