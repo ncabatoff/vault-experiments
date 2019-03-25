@@ -78,4 +78,4 @@ function killagent {
 trap killagent EXIT
 
 sleep 2
-VAULT_ADDR=http://localhost:8007 test bar = "$(vault read -format=json -field=data kv/foo|jq -r .val)"
+test bar = "$(VAULT_ADDR=http://127.0.0.1:8007 vault read -format=json -field=data kv/foo|jq -r .val)"
