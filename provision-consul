@@ -16,7 +16,7 @@ if [ -x /vagrant/consul/consul ]; then
 else
   echo "Fetching consul"
 
-  CONSUL_VERSION=1.2.0
+  CONSUL_VERSION=1.4.4
   CONSUL_ARCH=linux_amd64
   CONSUL_ZIP=consul_${CONSUL_VERSION}_${CONSUL_ARCH}.zip
   cd /tmp
