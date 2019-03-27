@@ -61,17 +61,87 @@ vault secrets list -detailed
 
 CONSUL_HTTP_TOKEN=$CONSUL_MASTER_TOKEN consul acl policy create -name 'list-all-nodes' -rules 'node_prefix "" { policy = "read" }'
 vault write consul/roles/my-role policies=list-all-nodes
+
+mkdir -p $tmpdir/vault
+
+function setup_approle {
+    vault auth enable approle
+
+    cat - > $tmpdir/vault/policy.hcl <<EOF
+path "/kv/*" {
+	capabilities = ["sudo", "create", "read", "update", "delete", "list"]
+}
+
+path "/auth/token/create" {
+	capabilities = ["create", "update"]
+}
+EOF
+    vault policy write autoauth $tmpdir/vault/policy.hcl
+
+    vault write auth/approle/role/autoauth-role \
+      policies=autoauth \
+      secret_id_ttl=1m \
+      token_ttl=1m \
+      token_max_ttl=3m
+
+    vault read -field=role_id -format=yaml auth/approle/role/autoauth-role/role-id > $tmpdir/vault/role_id
+    vault write -f -field=secret_id -format=yaml auth/approle/role/autoauth-role/secret-id > $tmpdir/vault/secret_id
+}
+
+function setup_agent {
+    cat - > $tmpdir/vault/agent.hcl << EOF
+    pid_file = "./pidfile"
+
+    auto_auth {
+        method {
+            type = "approle"
+            config = {
+                role_id_file_path = "$tmpdir/vault/role_id"
+                secret_id_file_path = "$tmpdir/vault/secret_id"
+            }
+        }
+        sink {
+            type = "file"
+            config = {
+                path = "$tmpdir/vault/file-foo"
+            }
+        }
+    }
+
+    cache {
+        use_auto_auth_token = true
+    }
+
+    listener "tcp" {
+        address = "127.0.0.1:8100"
+        tls_disable = true
+    }
+EOF
+}
+
+setup_approle
+setup_agent
+
+vault agent -config $tmpdir/vault/agent.hcl &
+function killagent {
+  kill %1
+}
+trap killagent EXIT
+
+sleep 2
+export VAULT_ADDR=http://127.0.0.1:8100
+
 vault read -format=json consul/creds/my-role > $tmpdir/consultoken.json
 
 while true; do
   CONSUL_HTTP_TOKEN=`jq -r .data.token < $tmpdir/consultoken.json` consul members > $tmpdir/members.txt
   if grep -q '^jessie' $tmpdir/members.txt; then
-    vault lease renew `jq -r .lease_id < $tmpdir/consultoken.json`
+    VAULT_ADDR=http://127.0.0.1:8200 vault lease renew `jq -r .lease_id < $tmpdir/consultoken.json`
   else
     echo "error running consul members, hostname not found; output: "
     cat $tmpdir/members.txt
     break
   fi
-  sleep 900
+  sleep 30
 done
 
