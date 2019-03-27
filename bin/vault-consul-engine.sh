@@ -75,14 +75,18 @@ path "/kv/*" {
 path "/auth/token/create" {
 	capabilities = ["create", "update"]
 }
+
+path "/consul/creds/my-role" {
+	capabilities = ["read"]
+}
 EOF
     vault policy write autoauth $tmpdir/vault/policy.hcl
 
     vault write auth/approle/role/autoauth-role \
       policies=autoauth \
-      secret_id_ttl=1m \
-      token_ttl=1m \
-      token_max_ttl=3m
+      secret_id_ttl=20s \
+      token_ttl=5s \
+      token_max_ttl=30s
 
     vault read -field=role_id -format=yaml auth/approle/role/autoauth-role/role-id > $tmpdir/vault/role_id
     vault write -f -field=secret_id -format=yaml auth/approle/role/autoauth-role/secret-id > $tmpdir/vault/secret_id
@@ -121,7 +125,6 @@ EOF
 
 setup_approle
 setup_agent
-
 vault agent -config $tmpdir/vault/agent.hcl &
 function killagent {
   kill %1
@@ -129,19 +132,20 @@ function killagent {
 trap killagent EXIT
 
 sleep 2
-export VAULT_ADDR=http://127.0.0.1:8100
+VAULT_ADDR=http://127.0.0.1:8100
+VAULT_TOKEN=""
 
 vault read -format=json consul/creds/my-role > $tmpdir/consultoken.json
 
 while true; do
   CONSUL_HTTP_TOKEN=`jq -r .data.token < $tmpdir/consultoken.json` consul members > $tmpdir/members.txt
   if grep -q '^jessie' $tmpdir/members.txt; then
-    VAULT_ADDR=http://127.0.0.1:8200 vault lease renew `jq -r .lease_id < $tmpdir/consultoken.json`
+    vault lease renew `jq -r .lease_id < $tmpdir/consultoken.json`
   else
     echo "error running consul members, hostname not found; output: "
     cat $tmpdir/members.txt
     break
   fi
-  sleep 30
+  sleep 10
 done
 
