@@ -1,0 +1,30 @@
+global:
+  scrape_interval: 1s
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  - job_name: consul
+    metrics_path: /v1/agent/metrics
+    params:
+      format: ["prometheus"]
+    static_configs:
+      - targets: ["localhost:8500"]
+
+  - job_name: consul-vault
+    metrics_path: /v1/sys/metrics
+    params:
+      format: ["prometheus"]
+    bearer_token_file: /etc/prometheus/vault-scrape-token
+    consul_sd_configs:
+      - allow_stale: true
+        services: ["vault"]
+    relabel_configs:
+      - source_labels: ['__meta_consul_service']
+        regex:         '(.*)'
+        target_label: 'job'
+        replacement:   '$1'
+
+

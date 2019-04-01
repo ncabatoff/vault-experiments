@@ -35,10 +35,15 @@ bootstrap_expect = 1
 addresses {
   http = "127.0.0.1 {{ GetPrivateIPs }}"
 }
+telemetry {
+  prometheus_retention_time = "1h"
+  disable_hostname = true
+}
 EOF
 
 cp /vagrant/consul/consul.service /etc/systemd/system/
 systemctl daemon-reload
+systemctl enable consul
 systemctl start consul
 
 while ! nc -z localhost 8500; do

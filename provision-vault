@@ -31,6 +31,7 @@ echo "Starting vault"
 cp /vagrant/vault/vault.hcl /etc/
 cp /vagrant/vault/vault.service /etc/systemd/system/
 systemctl daemon-reload
+systemctl enable vault
 systemctl start vault
 
 VAULT_PORT=8200

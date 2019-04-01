@@ -1,0 +1,43 @@
+#!/bin/bash
+
+set -e
+
+# Clean up in case we're re-run, start fresh.
+systemctl stop prometheus 2>/dev/null || true
+rm -rf /etc/prometheus /var/prometheus 2>/dev/null || true
+mkdir /etc/prometheus
+
+# Setup vault user and data dir
+id -u prometheus &>/dev/null || sudo useradd -r -d /var/lib/prometheus -s /bin/nologin prometheus
+install -o prometheus -g prometheus -m 750 -d /var/prometheus
+
+if [ -x /vagrant/prometheus/prometheus ]; then
+  cp /vagrant/prometheus/prometheus /usr/local/bin/
+else
+  echo "Fetching prometheus"
+
+  PROMETHEUS_VERSION=2.8.1
+  PROMETHEUS_ARCH=linux-amd64
+  PROMETHEUS_TGZ=prometheus-${PROMETHEUS_VERSION}.${PROMETHEUS_ARCH}.tar.gz
+  cd /tmp
+  wget -q https://github.com/prometheus/prometheus/releases/download/v$PROMETHEUS_VERSION/$PROMETHEUS_TGZ
+  tar zxf /tmp/$PROMETHEUS_TGZ --strip-components 1
+  cp prometheus promtool /usr/local/bin/
+fi
+
+cp /vagrant/prometheus/prometheus.yml /etc/prometheus
+cp /vagrant/prometheus/prometheus.service /etc/systemd/system/
+systemctl daemon-reload
+systemctl enable prometheus
+systemctl start prometheus
+
+# TODO figure out what to do for secondary cluster tokens
+. /etc/environment
+export VAULT_ADDR
+VAULT_TOKEN=$VAULT_ROOT_TOKEN_0 vault token create -field=token > /etc/prometheus/vault-scrape-token
+
+while ! nc -z localhost 9090; do
+  sleep 1
+  echo -n '.'
+done
+echo
