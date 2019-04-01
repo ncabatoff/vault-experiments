@@ -15,6 +15,8 @@ initoutput=$(vault operator init -key-shares=1 -key-threshold=1 -format=json)
 unsealkey=$(echo "$initoutput" | jq -r .unseal_keys_hex[0])
 roottoken=$(echo "$initoutput" | jq -r .root_token)
 
+sudo sh -c "echo VAULT_ROOT_TOKEN_0='$roottoken' >> /etc/environment"
+
 if [ "$rootstdout" = "" ]; then
     vault operator unseal "$unsealkey"
     echo
