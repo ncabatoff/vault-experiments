@@ -42,14 +42,6 @@ EOF
 SEC_TOKEN=$(vault token create -policy=secautounseal -format=json |jq -r .auth.client_token)
 
 VAULT_TOKEN=$SEC_TOKEN vault server -config=$tmpdir/vault-secondary.hcl -log-level=debug > $tmpdir/secondary.log 2>&1 &
-function cleanup {
-  kill %1
-  rm -rf $tmpdir
-  vault secrets disable transit
-  vault policy delete secautounseal
-  consul kv delete -recurse vault2
-}
-#trap cleanup EXIT
 
 while ! nc -z localhost 8202; do
   sleep 1
@@ -68,6 +60,14 @@ done
 echo
 
 VAULT_TOKEN=$SEC_TOKEN vault server -config=$tmpdir/vault-secondary.hcl -log-level=debug > $tmpdir/secondary-unseal.log 2>&1 &
+function cleanup {
+  kill %1
+  rm -rf $tmpdir
+  vault secrets disable transit
+  vault policy delete secautounseal
+  consul kv delete -recurse vault2
+}
+trap cleanup EXIT
 while ! nc -z localhost 8202; do
   sleep 1
   echo -n '.'
