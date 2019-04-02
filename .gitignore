@@ -2,3 +2,5 @@
 .vagrant
 vault/vault
 consul/consul
+prometheus/prometheus
+node_exporter/node_exporter

@@ -12,4 +12,6 @@ Vagrant.configure("2") do |config|
   config.vm.provision "consul",  type: "shell", path: "provision-consul"
   config.vm.provision "vault",   type: "shell", path: "provision-vault"
   config.vm.provision "prometheus",  run: "never", type: "shell", path: "provision-prometheus"
+  config.vm.provision "node_exporter",  run: "never", type: "shell", path: "provision-node_exporter"
+  config.vm.provision :docker
 end

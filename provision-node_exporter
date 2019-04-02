@@ -1,0 +1,37 @@
+#!/bin/bash
+
+set -e
+
+# Clean up in case we're re-run, start fresh.
+systemctl stop node_exporter 2>/dev/null || true
+rm -rf /etc/node_exporter /var/node_exporter 2>/dev/null || true
+mkdir /etc/node_exporter
+
+# Setup vault user and data dir
+id -u node_exporter &>/dev/null || sudo useradd -r -d /var/lib/node_exporter -s /bin/nologin node_exporter
+install -o node_exporter -g node_exporter -m 750 -d /var/node_exporter
+
+if [ -x /vagrant/node_exporter/node_exporter ]; then
+  cp /vagrant/node_exporter/node_exporter /usr/local/bin/
+else
+  echo "Fetching node_exporter"
+
+  NODE_EXPORTER_VERSION=0.17.0
+  NODE_EXPORTER_ARCH=linux-amd64
+  NODE_EXPORTER_TGZ=node_exporter-${NODE_EXPORTER_VERSION}.${NODE_EXPORTER_ARCH}.tar.gz
+  cd /tmp
+  wget -q https://github.com/prometheus/node_exporter/releases/download/v$NODE_EXPORTER_VERSION/$NODE_EXPORTER_TGZ
+  tar zxf /tmp/$NODE_EXPORTER_TGZ --strip-components 1
+  cp node_exporter /usr/local/bin/
+fi
+
+cp /vagrant/node_exporter/node_exporter.service /etc/systemd/system/
+systemctl daemon-reload
+systemctl enable node_exporter
+systemctl start node_exporter
+
+while ! nc -z localhost 9100; do
+  sleep 1
+  echo -n '.'
+done
+echo

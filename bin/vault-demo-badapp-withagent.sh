@@ -11,4 +11,6 @@ path "/auth/token/renew-self" {
 }
 '
 
-VAULT_TOKEN= VAULT_ADDR=http://localhost:8007 /vagrant/cmd/badapp/badapp
+VAULT_TOKEN=
+VAULT_ADDR=http://localhost:8007
+VAULT_TOKEN=$(vault token create -policy=agent -renewable -ttl=5s -format=json | jq -r .auth.client_token) /vagrant/cmd/badapp/badapp
