@@ -14,6 +14,6 @@ path "/auth/token/renew-self" {
 EOF
 vault policy write badapp $tmpdir/badapp-policy.hcl
 
-TOKEN=$(vault token create -policy=badapp -renewable -ttl=1h -format=json | jq -r .auth.client_token)
+TOKEN=$(vault token create -policy=badapp -renewable -ttl=5s -format=json | jq -r .auth.client_token)
 
 VAULT_TOKEN=$TOKEN /vagrant/cmd/badapp/badapp
