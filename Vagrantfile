@@ -3,6 +3,7 @@ Vagrant.configure("2") do |config|
   config.vm.box = "debian/jessie64"
   config.vm.provider "virtualbox" do |v|
     v.memory = 1024
+    v.customize [ "guestproperty", "set", :id, "/VirtualBox/GuestAdd/VBoxService/--timesync-set-threshold", 1000 ]
   end
   config.vm.network "forwarded_port", guest: 8500, host: 18500  # consul
   config.vm.network "forwarded_port", guest: 8200, host: 18200  # vault
