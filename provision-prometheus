@@ -32,9 +32,6 @@ systemctl enable prometheus
 systemctl start prometheus
 
 # TODO figure out what to do for secondary cluster tokens
-. /etc/environment
-export VAULT_ADDR
-VAULT_TOKEN=$VAULT_ROOT_TOKEN_0 vault token create -field=token > /etc/prometheus/vault-scrape-token
 
 while ! nc -z localhost 9090; do
   sleep 1

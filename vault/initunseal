@@ -11,21 +11,18 @@ if [ $# = 1 ]; then
 fi
 
 # WARNING: This is not a secure way to initialize vault.  This is for a demo/toy.
-initoutput=$(vault operator init -key-shares=1 -key-threshold=1 -format=json)
-unsealkey=$(echo "$initoutput" | jq -r .unseal_keys_hex[0])
-roottoken=$(echo "$initoutput" | jq -r .root_token)
-
-sudo sh -c "echo VAULT_ROOT_TOKEN_0='$roottoken' >> /etc/environment"
+sudo $(dirname $0)/init
+. /etc/environment
 
 if [ "$rootstdout" = "" ]; then
-    vault operator unseal "$unsealkey"
+    $(dirname $0)/unseal
     echo
-    echo "Unseal key is '$unsealkey', you will need it to unseal vault if you restart it."
+    echo "Unseal key is '$VAULT_UNSEAL_KEY_0', you will need it to unseal vault if you restart it."
     echo "Alternatively, you can run 'vagrant provision' from the host machine but you will lose all vault data."
     echo
-    echo "Root token is '$roottoken'."
-    echo "Run /vagrant/reprovision to wipe Vault and start fresh."
+    echo "Root token is '$VAULT_ROOT_TOKEN_0'."
+    echo "Run /vagrant/reprovision to wipe Vault/Consul and start fresh."
 else
-    vault operator unseal "$unsealkey" 1>&2
-    echo $roottoken
+    vault operator unseal "$VAULT_UNSEAL_KEY_0" 1>&2
+    echo $VAULT_ROOT_TOKEN_0
 fi

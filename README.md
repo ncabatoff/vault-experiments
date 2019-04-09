@@ -37,3 +37,33 @@ consul watch -type=service -service=vault
 ```
 
 Or use the web UIs, ports forwarded to http://localhost:18500/ui (consul) and http://localhost:18200/ui (vault)
+
+## Unsealing
+
+When you first login:
+
+```bash
+/vagrant/vault/initunseal
+```
+
+After a reboot or a restart of Vault:
+
+```bash
+/vagrant/vault/unseal
+```
+
+## Dashboards
+
+To enable monitoring, after unsealing your vault:
+
+```bash
+sudo /vagrant/provision-node_exporter
+sudo /vagrant/provision-prometheus
+/vagrant/provision-grafana.sh
+```
+
+Then (after a few seconds to a minute for it to come up)
+you can connect to [Grafana](http://admin:admin@localhost:3000) to see
+dashboards, or [Prometheus](http://localhost:19090/targets) to see the status
+of metrics collection.
+

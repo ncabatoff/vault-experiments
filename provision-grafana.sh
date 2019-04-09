@@ -34,7 +34,6 @@ providers:
     path: /local/dashboards
 EOF
 
-mkdir -p ~/grafana/dashboards
-tar zxfC /vagrant/dashboards.tgz ~/grafana/dashboards
+cp -r /vagrant/dashboards ~/grafana/
 
 docker run --net=host --name grafana --rm -d -v ~/grafana:/local --env GF_PATHS_PROVISIONING=/local/provisioning grafana/grafana:6.0.2
