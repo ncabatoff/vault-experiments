@@ -1,5 +1,5 @@
 Vagrant.configure("2") do |config|
-  config.vm.synced_folder ".", "/vagrant", type: "sshfs"
+  config.vm.synced_folder ".", "/vagrant", type: "virtualbox"
   config.vm.box = "debian/jessie64"
   config.vm.provider "virtualbox" do |v|
     v.memory = 1024
