@@ -43,3 +43,7 @@ newroot=$(vault operator generate-root -otp="$otp" -decode="$encoded")
 sed -i /^VAULT_ROOT_TOKEN_1/d /etc/environment
 echo "VAULT_ROOT_TOKEN_1=$newroot" >> /etc/environment
 
+while ! VAULT_ADDR=http://localhost:8202 VAULT_TOKEN=$newroot vault token create -id=prometheus-token-id 2>/dev/null; do
+  echo -n '.'
+  sleep 1
+done

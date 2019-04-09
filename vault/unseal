@@ -4,11 +4,14 @@ set -e
 
 INSTANCE=${1-0}
 PORT=$((8200+2*$INSTANCE))
-export VAULT_ADDR=http://localhost:$PORT
 
 . /etc/environment
+export VAULT_ADDR=http://localhost:$PORT
+
 eval vault operator unseal \$VAULT_UNSEAL_KEY_$INSTANCE
 
-VAULT_TOKEN=$VAULT_ROOT_TOKEN_0 vault token create -field=token |
+eval test -z "\$VAULT_ROOT_TOKEN_$INSTANCE" && exit
+
+eval VAULT_TOKEN=\$VAULT_ROOT_TOKEN_$INSTANCE vault token create -id=prometheus-token-id -field=token |
   sudo sh -c 'cat - >/etc/prometheus/vault-scrape-token'
 

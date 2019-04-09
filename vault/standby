@@ -6,9 +6,11 @@ INSTANCE=${1-1}
 PORT=$((8200+2*$INSTANCE))
 
 sed -e s/:8200/:$PORT/ /etc/vault.hcl > /etc/vault$INSTANCE.hcl
-sed s/vault.hcl/vault$INSTANCE.hcl/ /etc/systemd/system/vault.service > /etc/systemd/system/vault$INSTANCE.service 
+sed s/vault.hcl/vault$INSTANCE.hcl/ /etc/systemd/system/vault.service > /etc/systemd/system/vault$INSTANCE.service
+systemctl stop vault$INSTANCE
+consul kv delete -recurse /vault$INSTANCE
 systemctl daemon-reload
-systemctl restart vault$INSTANCE
+systemctl start vault$INSTANCE
 
 while ! nc -z localhost $PORT; do
   sleep 1
@@ -17,6 +19,6 @@ done
 echo
 
 # TODO revisit, right now we assume that all standbys are for the primary cluster.
-. /etc/environment
-export VAULT_ADDR=http://localhost:$PORT
-vault operator unseal $VAULT_UNSEAL_KEY_0
+sed -i /^VAULT_UNSEAL_KEY_$INSTANCE=/d /etc/environment
+grep VAULT_UNSEAL_KEY_0= /etc/environment | sed s/KEY_0=/KEY_$INSTANCE=/ >> /etc/environment
+$(dirname $0)/unseal $INSTANCE

@@ -10,3 +10,5 @@ while ! consul kv export 2>/dev/null; do
   sleep 1
 done
 /vagrant/provision-vault
+
+echo "VAULT_ADDR=http://localhost:8200" > /etc/environment
