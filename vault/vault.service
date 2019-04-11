@@ -9,7 +9,7 @@ Group=vault
 ExecStart=/usr/local/bin/vault server -config=/etc/vault.hcl -log-level=debug 
 ExecReload=/usr/local/bin/kill --signal HUP $MAINPID
 CapabilityBoundingSet=CAP_SYSLOG CAP_IPC_LOCK
-Capabilities=CAP_IPC_LOCK+ep
+AmbientCapabilities=CAP_IPC_LOCK
 SecureBits=keep-caps
 NoNewPrivileges=yes
 KillSignal=SIGINT

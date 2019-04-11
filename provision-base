@@ -7,4 +7,4 @@ set -e
 export DEBIAN_FRONTEND=noninteractive
 
 apt-get update
-apt-get install -y -q unzip jq curl
+apt-get install -y -q unzip jq curl libcap2-bin
