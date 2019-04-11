@@ -8,3 +8,7 @@ export DEBIAN_FRONTEND=noninteractive
 
 apt-get update
 apt-get install -y -q unzip jq curl libcap2-bin psmisc
+
+# Hack so that other scripts can assume this directory is there even if
+# provision-prometheus hasn't been run.
+mkdir -p /etc/prometheus/file_sd_configs
