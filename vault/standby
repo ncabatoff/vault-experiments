@@ -6,6 +6,7 @@ INSTANCE=${1-1}
 PORT=$((8200+2*$INSTANCE))
 
 sed -e s/:8200/:$PORT/ /etc/vault.hcl > /etc/vault$INSTANCE.hcl
+sed -e s/:8200/:$PORT/ /etc/prometheus/file_sd_configs/vault.json > /etc/prometheus/file_sd_configs/vault$INSTANCE.json
 sed s/vault.hcl/vault$INSTANCE.hcl/ /etc/systemd/system/vault.service > /etc/systemd/system/vault$INSTANCE.service
 systemctl stop vault$INSTANCE
 consul kv delete -recurse /vault$INSTANCE

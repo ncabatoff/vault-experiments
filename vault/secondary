@@ -6,7 +6,8 @@ set -e
 VAULT2_PORT=8202
 rm -rf /var/vault/data2
 sed -e s/:8200/:$VAULT2_PORT/ -e s,vault/,vault2/, /etc/vault.hcl > /etc/vault2.hcl
-sed s/vault.hcl/vault2.hcl/ /etc/systemd/system/vault.service > /etc/systemd/system/vault2.service 
+sed -e s/:8200/:$VAULT2_PORT/ /etc/prometheus/file_sd_configs/vault.json > /etc/prometheus/file_sd_configs/vault2.json
+sed s/vault.hcl/vault2.hcl/ /etc/systemd/system/vault.service > /etc/systemd/system/vault2.service
 systemctl daemon-reload
 systemctl restart vault2
 

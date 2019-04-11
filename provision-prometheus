@@ -5,7 +5,7 @@ set -e
 # Clean up in case we're re-run, start fresh.
 systemctl stop prometheus 2>/dev/null || true
 rm -rf /etc/prometheus /var/prometheus 2>/dev/null || true
-mkdir /etc/prometheus
+mkdir -p /etc/prometheus/file_sd_configs
 
 # Setup vault user and data dir
 id -u prometheus &>/dev/null || sudo useradd -r -d /var/lib/prometheus -s /bin/nologin prometheus

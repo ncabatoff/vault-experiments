@@ -30,6 +30,7 @@ setcap cap_ipc_lock+ep /usr/local/bin/vault
 echo "Starting vault"
 cp /vagrant/vault/vault.hcl /etc/
 cp /vagrant/vault/vault.service /etc/systemd/system/
+echo '[{"targets": ["localhost:8200"]}]' > /etc/prometheus/file_sd_configs/vault.json
 systemctl daemon-reload
 systemctl enable vault
 systemctl start vault
