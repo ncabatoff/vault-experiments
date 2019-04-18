@@ -11,6 +11,8 @@ path "/auth/token/renew-self" {
 }
 '
 
+# Use Vault Agent with cache+auto-auth as our "Vault" server
 VAULT_TOKEN=
 VAULT_ADDR=http://localhost:8007
-VAULT_TOKEN=$(vault token create -policy=agent -renewable -ttl=5s -format=json | jq -r .auth.client_token) /vagrant/cmd/badapp/badapp
+
+/vagrant/cmd/badapp/badapp

@@ -61,7 +61,7 @@ function kill_secondary() {
     echo "* kill_secondary"
     kill $(cat ${tmpdir}/pidfile)
 
-    while nc -z localhost 8202 || -f ${tmpdir}/pidfile; do
+    while nc -z localhost 8202 || test -f ${tmpdir}/pidfile; do
       sleep 1
       echo -n '.'
     done
