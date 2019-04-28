@@ -40,7 +40,9 @@ sleep 1
 echo "starting main loop"
 while true; do
   vault server -config=/vault/config/vault-flaky.hcl &
-  sleep $(( $RANDOM % 60 ))
+  sleep $(( $RANDOM % 90 ))
+  sleep 3
   kill $(cat /data/pid_file)
-  sleep $(( $RANDOM % 10 ))
+  sleep $(( $RANDOM % 30 ))
+  sleep 3
 done

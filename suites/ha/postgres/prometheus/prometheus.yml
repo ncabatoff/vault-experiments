@@ -1,0 +1,22 @@
+global:
+  scrape_interval: 1s
+
+scrape_configs:
+  - job_name: vault
+    static_configs:
+      - targets:
+        - "vault1:8200"
+        - "vault2:8200"
+    metrics_path: /v1/sys/metrics
+    params:
+      format: ["prometheus"]
+    bearer_token_file: /etc/prometheus/vault-scrape-token
+
+  - job_name: consul-exporter
+    static_configs:
+      - targets: ["consul-exporter:9107"]
+
+  - job_name: client
+    static_configs:
+      - targets: ["client:8080"]
+
