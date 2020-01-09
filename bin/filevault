@@ -1,0 +1,65 @@
+#!/usr/bin/env bash
+
+# filevault starts a new file-based vault server, killing any existing vault server
+# first - but only if it uses the same config file.  All files generated are put under
+# ~/filevault.
+
+# The script should be sourced to ensure that VAULT_ADDR and VAULT_TOKEN are set.
+
+set -ex
+
+export PATH="$HOME/go/bin:$PATH"
+
+vaulthome=$HOME/filevault/
+cfgpath=$vaulthome/vault.hcl
+
+kill `ps axuw |grep "vault server -config=$cfgpath" |awk '{print $2}'` && sleep 1
+
+if [ ! -d $vaulthome ]; then
+    mkdir -p $vaulthome
+    touch $vaulthome/needsinit
+    cat - > $cfgpath <<EOF
+ui = true
+listener "tcp" {
+    address = "0.0.0.0:8200"
+    tls_disable = 1
+    telemetry {
+      unauthenticated_metrics_access = true
+		}
+}
+storage "file" {
+    path = "$HOME/filevault/data/"
+}
+telemetry {
+    prometheus_retention_time = "1h"
+    disable_hostname = true
+    dogstatsd_addr = "127.0.0.1:8125"
+}
+raw_storage_endpoint = true
+EOF
+fi
+
+vault server -config=$cfgpath -log-level=debug 2> $vaulthome/vault.log &
+while ! nc -w 1 localhost 8200 </dev/null; do sleep 1; done
+
+export VAULT_ADDR=http://localhost:8200
+
+if [ -f $vaulthome/needsinit ]; then
+    initoutput=$(vault operator init -key-shares=1 -key-threshold=1 -format=json)
+    unsealkey=$(echo "$initoutput" | jq -r .unseal_keys_hex[0])
+    echo $unsealkey > $vaulthome/unsealkey
+    roottoken=$(echo "$initoutput" | jq -r .root_token)
+    echo $roottoken > $vaulthome/roottoken
+    rm $vaulthome/needsinit
+fi
+vault operator unseal $(cat $vaulthome/unsealkey)
+
+
+export VAULT_TOKEN=$(cat $vaulthome/roottoken)
+
+if [ ! -f $vaulthome/audit ]; then
+    vault audit enable file file_path=$vaulthome/audit
+    touch $vaulthome/audit
+fi
+
+set +ex

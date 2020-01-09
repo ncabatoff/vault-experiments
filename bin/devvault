@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+
+# devvault starts a new dev vault server, killing any existing dev vault server
+# first.  The script should be sourced to ensure that VAULT_ADDR and VAULT_TOKEN
+# are set.
+
+# Logs are written to ~/devvault/vault.log, audit records to ~/devvault/audit.log.
+
+set -x
+
+PATH=~/go/bin:$PATH
+
+mkdir -p ~/devvault
+> ~/devvault/vault.log
+> ~/devvault/audit.log
+
+kill `ps axuw |grep 'vault server -dev' |awk '{print $2}'` && sleep 1
+vault server -dev -dev-root-token-id=devroot 2> ~/devvault/vault.log &
+while ! nc -w 1 localhost 8200 </dev/null; do sleep 1; done
+
+export VAULT_ADDR=http://localhost:8200
+export VAULT_TOKEN=devroot
+
+vault audit enable file file_path=~/devvault/audit.log
+
+set +x

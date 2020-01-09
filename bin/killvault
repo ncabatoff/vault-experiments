@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+
+kill `ps axuw |grep 'vault server' |awk '{print $2}'` && sleep 1
